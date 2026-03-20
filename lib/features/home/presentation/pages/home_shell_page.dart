@@ -1,4 +1,8 @@
-import 'package:deadline_ai/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:deadline_ai/features/deadlines/presentation/cubit/deadline_cubit.dart';
+import 'package:deadline_ai/features/deadlines/presentation/cubit/deadline_state.dart';
+import 'package:deadline_ai/features/heatmap/presentation/pages/heatmap_page.dart';
+import 'package:deadline_ai/features/profile/presentation/pages/profile_page.dart';
+import 'package:deadline_ai/features/squad/presentation/pages/squad_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -14,12 +18,18 @@ class _HomeShellPageState extends State<HomeShellPage> {
   int _currentIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    context.read<DeadlineCubit>().fetchDeadlines();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final tabs = [
       _HomeTab(onUploadTap: () => context.push('/upload')),
-      const _SimpleTab(title: 'Squads', subtitle: 'Shared board comes next.'),
-      const _SimpleTab(title: 'Heatmap', subtitle: 'Stress heatmap comes next.'),
-      _ProfileTab(onLogout: () => context.read<AuthCubit>().logout()),
+      const SquadPage(),
+      const HeatmapPage(),
+      const ProfilePage(),
     ];
 
     return Scaffold(
@@ -46,63 +56,118 @@ class _HomeTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Primary flow ready',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+    return BlocBuilder<DeadlineCubit, DeadlineState>(
+      builder: (context, state) {
+        final deadlines = state.deadlines;
+        return RefreshIndicator(
+          onRefresh: () => context.read<DeadlineCubit>().fetchDeadlines(),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              const Text(
+                'Dashboard',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              const Text('Track deadlines, detect clashes and plan sessions.'),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _StatCard(
+                      icon: Icons.event_note,
+                      title: 'Total deadlines',
+                      value: '${deadlines.length}',
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _StatCard(
+                      icon: Icons.warning_amber_rounded,
+                      title: 'Clashes',
+                      value: '${state.clashes.length}',
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: onUploadTap,
+                icon: const Icon(Icons.upload_file),
+                label: const Text('Upload syllabus PDF'),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: state.isLoadingClashes
+                    ? null
+                    : () => context.read<DeadlineCubit>().fetchClashes(withPlan: true),
+                icon: const Icon(Icons.auto_graph),
+                label: Text(state.isLoadingClashes ? 'Analyzing...' : 'Analyze clashes'),
+              ),
+              const SizedBox(height: 16),
+              if (state.isLoading)
+                const Center(child: CircularProgressIndicator())
+              else if (deadlines.isEmpty)
+                const Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text('No deadlines yet. Upload your syllabus to get started.'),
+                  ),
+                )
+              else
+                ...deadlines.take(8).map(
+                      (deadline) => Card(
+                        child: ListTile(
+                          title: Text(deadline.title),
+                          subtitle: Text(
+                            '${deadline.courseCode ?? deadline.courseName ?? 'General'} • ${deadline.dueDate}',
+                          ),
+                          trailing: Text(
+                            (deadline.priorityScore ?? 0).toStringAsFixed(1),
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ),
+                    ),
+            ],
           ),
-          const SizedBox(height: 8),
-          const Text('Start by uploading syllabus PDFs and testing extraction review.'),
-          const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: onUploadTap,
-            icon: const Icon(Icons.upload_file),
-            label: const Text('Upload Syllabus PDFs'),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
-class _SimpleTab extends StatelessWidget {
+class _StatCard extends StatelessWidget {
+  final IconData icon;
   final String title;
-  final String subtitle;
+  final String value;
 
-  const _SimpleTab({required this.title, required this.subtitle});
+  const _StatCard({
+    required this.icon,
+    required this.title,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Text(subtitle),
-        ],
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon),
+            const SizedBox(height: 10),
+            Text(title),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _ProfileTab extends StatelessWidget {
-  final VoidCallback onLogout;
-
-  const _ProfileTab({required this.onLogout});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: ElevatedButton.icon(
-        onPressed: onLogout,
-        icon: const Icon(Icons.logout),
-        label: const Text('Logout'),
-      ),
-    );
-  }
-}

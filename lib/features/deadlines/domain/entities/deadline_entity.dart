@@ -9,19 +9,24 @@ enum DeadlineType {
   other,
 }
 
-class ExtractedDeadlineEntity {
+class DeadlineEntity {
+  final String deadlineId;
   final String title;
   final String? courseCode;
   final String? courseName;
   final DeadlineType type;
-  final String dueDate; // yyyy-MM-dd
+  final String dueDate;
   final String? dueTime;
   final double? weight;
   final String? description;
   final bool isHardDeadline;
-  final double confidence;
+  final String status;
+  final List<String> reminderSchedule;
+  final double? priorityScore;
+  final String createdAt;
 
-  const ExtractedDeadlineEntity({
+  const DeadlineEntity({
+    required this.deadlineId,
     required this.title,
     this.courseCode,
     this.courseName,
@@ -31,6 +36,9 @@ class ExtractedDeadlineEntity {
     this.weight,
     this.description,
     required this.isHardDeadline,
-    required this.confidence,
+    required this.status,
+    required this.reminderSchedule,
+    this.priorityScore,
+    required this.createdAt,
   });
 }

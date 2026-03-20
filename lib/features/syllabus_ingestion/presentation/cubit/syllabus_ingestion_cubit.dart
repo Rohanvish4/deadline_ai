@@ -11,25 +11,25 @@ class SyllabusIngestionCubit extends Cubit<SyllabusIngestionState> {
 
   Future<void> pickPdfFiles() async {
     final result = await FilePicker.platform.pickFiles(
-      allowMultiple: true,
+      allowMultiple: false,
       type: FileType.custom,
       allowedExtensions: ['pdf'],
     );
 
-    if (result == null) return;
+    if (result == null || result.files.isEmpty) return;
 
     emit(state.copyWith(files: result.files, errorMessage: null));
   }
 
   Future<void> extractDeadlines() async {
     if (state.files.isEmpty) {
-      emit(state.copyWith(errorMessage: 'Please pick at least one PDF file'));
+      emit(state.copyWith(errorMessage: 'Please pick a PDF file'));
       return;
     }
 
     emit(state.copyWith(isLoading: true, errorMessage: null));
 
-    final result = await syllabusRepository.extractDeadlines(state.files);
+    final result = await syllabusRepository.extractDeadlines(state.files.first);
 
     result.fold(
       (failure) => emit(state.copyWith(isLoading: false, errorMessage: failure.message)),

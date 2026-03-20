@@ -16,6 +16,10 @@ class AuthLoading extends AuthState {
   const AuthLoading();
 }
 
+class AuthSubmitting extends AuthState {
+  const AuthSubmitting();
+}
+
 class AuthAuthenticated extends AuthState {
   final UserEntity user;
 
@@ -36,4 +40,26 @@ class AuthError extends AuthState {
 
   @override
   List<Object?> get props => [message];
+}
+
+class AuthMessage extends AuthState {
+  final String message;
+
+  const AuthMessage(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+class AuthAwaitingVerification extends AuthState {
+  final String email;
+  final String message;
+
+  const AuthAwaitingVerification({
+    required this.email,
+    required this.message,
+  });
+
+  @override
+  List<Object?> get props => [email, message];
 }

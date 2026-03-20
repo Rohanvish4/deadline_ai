@@ -16,13 +16,13 @@ class SyllabusRepositoryImpl implements SyllabusRepository {
   });
 
   @override
-  Future<Either<Failure, List<ExtractedDeadlineEntity>>> extractDeadlines(List<PlatformFile> files) async {
+  Future<Either<Failure, List<ExtractedDeadlineEntity>>> extractDeadlines(PlatformFile file) async {
     if (!await networkInfo.isConnected) {
       return const Left(NetworkFailure());
     }
 
     try {
-      final deadlines = await remoteDataSource.extractDeadlines(files);
+      final deadlines = await remoteDataSource.extractDeadlines(file);
       return Right(deadlines);
     } catch (e) {
       return Left(UnknownFailure(message: e.toString()));

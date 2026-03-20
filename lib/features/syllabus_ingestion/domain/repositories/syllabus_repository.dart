@@ -4,5 +4,5 @@ import 'package:deadline_ai/features/syllabus_ingestion/domain/entities/extracte
 import 'package:file_picker/file_picker.dart';
 
 abstract class SyllabusRepository {
-  Future<Either<Failure, List<ExtractedDeadlineEntity>>> extractDeadlines(List<PlatformFile> files);
+  Future<Either<Failure, List<ExtractedDeadlineEntity>>> extractDeadlines(PlatformFile file);
 }
