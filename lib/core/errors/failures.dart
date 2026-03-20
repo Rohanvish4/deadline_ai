@@ -1,0 +1,18 @@
+abstract class Failure {
+  final String message;
+  final int? statusCode;
+
+  const Failure({required this.message, this.statusCode});
+}
+
+class ServerFailure extends Failure {
+  const ServerFailure({required super.message, super.statusCode});
+}
+
+class NetworkFailure extends Failure {
+  const NetworkFailure({super.message = 'No internet connection'});
+}
+
+class UnknownFailure extends Failure {
+  const UnknownFailure({required super.message});
+}
